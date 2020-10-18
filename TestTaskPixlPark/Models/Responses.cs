@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace TestTaskPixlPark.Models
@@ -24,6 +27,29 @@ namespace TestTaskPixlPark.Models
         public string ResponseCode { get; set; }
         public Product[] Result { get; set; }
 
+        public void Start()
+        {
+            foreach (var res in Result)
+            {
+                res.DateCreated = StrToNormDateConvert(res.DateCreated);
+                res.DateModified = StrToNormDateConvert(res.DateModified);
+                res.DatePaid = StrToNormDateConvert(res.DatePaid);
+                res.Update();
+            }
+        }
+
+        public string StrToNormDateConvert(string strDate) 
+        {
+            if (strDate == null)
+                return strDate;
+            Regex regex = new Regex(@"\D+");
+            DateTime Year1970 = new DateTime(1970, 1, 1, 0, 0, 0);
+
+            double AddMs;
+            if (double.TryParse(regex.Replace(strDate, ""), out AddMs))
+                return Year1970.AddMilliseconds(AddMs).ToString();
+            return strDate;
+        }
     }
 
     public class DeliveryAddress
@@ -50,6 +76,13 @@ namespace TestTaskPixlPark.Models
 
     public class Product
     {
+        public void Update()
+        {
+            if (DeliveryAddress == null)
+                DeliveryAddress = new DeliveryAddress();
+            if (Shipping == null)
+                Shipping = new Shipping();
+        }
         public string Id { get; set; }
         public string CustomId { get; set; }
         public string SourceOrderId { get; set; }
@@ -74,7 +107,6 @@ namespace TestTaskPixlPark.Models
         public string DatePaid { get; set; }
         public DeliveryAddress DeliveryAddress { get; set; }
         public Shipping Shipping { get; set; }
-
     }
 
 }

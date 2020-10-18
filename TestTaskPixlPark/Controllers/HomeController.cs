@@ -1,12 +1,7 @@
-﻿using System;
-using System.Diagnostics;
-using System.Net;
+﻿using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Http.Formatting;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -32,12 +27,20 @@ namespace TestTaskPixlPark.Controllers
             string privateKey = "8e49ff607b1f46e1a5e8f6ad5d312a80";
             string output = await GetAccessKey(publicKey, privateKey);
             System.Diagnostics.Debug.WriteLine(output);
-            System.Diagnostics.Debug.WriteLine("end");
-            GetProduct(output);
+            ResponseOrders response = await GetProduct(output);
+            response.Start();
+            System.Diagnostics.Debug.WriteLine("output");
+            System.Diagnostics.Debug.WriteLine(response.Result[0].Shipping);
+            foreach (var item in response.Result)
+            {
+                System.Diagnostics.Debug.WriteLine("output");
+                System.Diagnostics.Debug.WriteLine(item.Shipping.Title);
+            }
+            ViewBag.products = response.Result;
             return View();
         }
 
-        static async Task<string> GetProduct(string accessKey)
+        static async Task<ResponseOrders> GetProduct(string accessKey)
         {
             string path = "http://api.pixlpark.com/orders?oauth_token="+ accessKey;
             HttpResponseMessage response = await client.GetAsync(path);
@@ -45,15 +48,10 @@ namespace TestTaskPixlPark.Controllers
             if (response.IsSuccessStatusCode)
             {
                 var res = await response.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine(res);
-                System.Diagnostics.Debug.WriteLine("endorders");
-                //var responseOrders = JsonSerializer.Deserialize<ResponseOrders>(res);
                 responseOrders = await response.Content.ReadAsAsync<ResponseOrders>();
-                System.Diagnostics.Debug.WriteLine(responseOrders.ApiVersion);
-                System.Diagnostics.Debug.WriteLine(responseOrders.Result[0].CustomId);
-
+                return responseOrders;
             }
-            return "Hello";
+            return null;
         }
 
 
